@@ -10,9 +10,9 @@ buildscript {
         maven("https://jitpack.io")
     }
     dependencies {
-        classpath("com.android.tools.build:gradle:9.1.0")
+        classpath("com.android.tools.build:gradle:8.1.4")
         classpath("com.github.recloudstream:gradle:81b1d424d2")
-        classpath("org.jetbrains.kotlin:kotlin-gradle-plugin:2.3.20")
+        classpath("org.jetbrains.kotlin:kotlin-gradle-plugin:1.9.22")
     }
 }
 
@@ -35,13 +35,13 @@ subprojects {
     apply(plugin = "com.lagradost.cloudstream3.gradle")
 
     cloudstream {
-        setRepo(System.getenv("GITHUB_REPOSITORY") ?: "https://github.com/SaurabhKaperwan/CSX")
+        setRepo(System.getenv("GITHUB_REPOSITORY") ?: "https://github.com/moviewallwatchdownload-web/Rare-toons-india-scrapper")
         authors = listOf("megix")
     }
 
     android {
         namespace = "com.megix"
-        compileSdk = 36
+        compileSdk = 34
         defaultConfig {
             minSdk = 21
         }
@@ -67,15 +67,17 @@ subprojects {
     dependencies {
         val implementation by configurations
         val cloudstream by configurations
+
         cloudstream("com.lagradost:cloudstream3:pre-release")
+
         implementation(kotlin("stdlib"))
         implementation("com.github.Blatzar:NiceHttp:0.4.18")
-        implementation("org.jsoup:jsoup:1.22.2")
+        implementation("org.jsoup:jsoup:1.17.2")
         implementation("com.fasterxml.jackson.module:jackson-module-kotlin:2.13.1")
         implementation("com.squareup.okhttp3:okhttp:4.12.0")
-        implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.10.2")
-        implementation("org.mozilla:rhino:1.8.1")
-        implementation("androidx.annotation:annotation:1.10.0")
+        implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.8.0")
+        implementation("org.mozilla:rhino:1.7.14")
+        implementation("androidx.annotation:annotation:1.7.0")
         implementation("androidx.browser:browser:1.8.0")
         implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.0")
     }
