@@ -1,0 +1,8 @@
+{
+  "name": "RareAnimes Repository",
+  "description": "RareAnimes — Hindi Dubbed Anime & Cartoon",
+  "manifestVersion": 1,
+  "pluginLists": [
+    "https://raw.githubusercontent.com/moviesallwatchdowanload-web/Rare-toons-india-scrapper/builds/plugins.json"
+  ]
+}
