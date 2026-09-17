@@ -1,0 +1,25 @@
+[
+    {
+        "iconUrl": "https://www.rareanimes.mov/favicon.ico",
+        "fileHash": "sha256-c3ed59f690ca76aa34dc77e0aa0fd1fecc6ca5f2af219b19237e1f5c9704234f",
+        "apiVersion": 1,
+        "repositoryUrl": "https://github.com/moviesallwatchdowanload-web/Rare-toons-india-scrapper",
+        "fileSize": 17743,
+        "status": 1,
+        "language": "hi",
+        "authors": [
+            "megix"
+        ],
+        "tvTypes": [
+            "Anime",
+            "TvSeries",
+            "Movie",
+            "Cartoon"
+        ],
+        "version": 1,
+        "internalName": "RareAnimes",
+        "description": "RareAnimes \u2014 Hindi Dubbed Anime & Cartoon",
+        "url": "https://raw.githubusercontent.com/moviesallwatchdowanload-web/Rare-toons-india-scrapper/builds/RareAnimes.cs3",
+        "name": "RareAnimes"
+    }
+]
