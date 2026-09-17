@@ -1,10 +1,25 @@
-version = 1
+// Top-level build file
+buildscript {
+    repositories {
+        google()
+        mavenCentral()
+        maven("https://jitpack.io")
+    }
+    dependencies {
+        classpath("com.android.tools.build:gradle:8.1.4")
+        classpath("org.jetbrains.kotlin:kotlin-gradle-plugin:1.9.22")
+        classpath("com.github.recloudstream:gradle:81b1d424d2")
+    }
+}
 
-cloudstream {
-    language = "hi"
-    description = "RareAnimes — Hindi Dubbed Anime & Cartoon"
-    authors = listOf("megix")
-    status = 1
-    tvTypes = listOf("Anime", "TvSeries", "Movie", "Cartoon")
-    iconUrl = "https://www.rareanimes.mov/favicon.ico"
+allprojects {
+    repositories {
+        google()
+        mavenCentral()
+        maven("https://jitpack.io")
+    }
+}
+
+tasks.register<Delete>("clean") {
+    delete(rootProject.buildDir)
 }
