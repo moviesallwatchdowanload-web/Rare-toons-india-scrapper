@@ -7,4 +7,5 @@ cloudstream {
                     status = 1
                         tvTypes = listOf("Anime", "TvSeries", "Movie", "Cartoon")
                             iconUrl = "https://www.rareanimes.mov/favicon.ico"
+    setRepo("https://github.com/moviesallwatchdowanload-web/Rare-toons-india-scrapper")
 }
