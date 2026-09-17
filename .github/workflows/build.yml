@@ -57,6 +57,7 @@ jobs:
           mkdir -p $GITHUB_WORKSPACE/builds
           find . -path "*/build/*.cs3" -exec cp {} "$GITHUB_WORKSPACE/builds/" \;
           cp build/plugins.json $GITHUB_WORKSPACE/builds/ || echo "No plugins.json found"
+          cp repo.json $GITHUB_WORKSPACE/builds/ || echo "No repo.json found"
 
       - name: Push builds
         run: |
