@@ -2,8 +2,10 @@ package com.megix
 
 import com.lagradost.cloudstream3.*
 import com.lagradost.cloudstream3.utils.*
+import com.lagradost.cloudstream3.plugins.CloudstreamPlugin
 import org.jsoup.nodes.Element
 
+@CloudstreamPlugin
 open class RareAnimesProvider : MainAPI() {
     override var mainUrl = "https://www.rareanimes.mov"
     override var name = "RareAnimes"
@@ -84,12 +86,10 @@ open class RareAnimesProvider : MainAPI() {
         subtitleCallback: (SubtitleFile) -> Unit,
         callback: (ExtractorLink) -> Unit
     ): Boolean {
-        val sources = tryParseJson<ArrayList<EpisodeLink>>(data) ?: return false
-        sources.amap {
-            loadSourceNameExtractor(
-                "RareAnimes",
-                it.source,
-                "",
+        val sources = AppUtils.tryParseJson<ArrayList<EpisodeLink>>(data) ?: return false
+        for (source in sources) {
+            loadExtractor(
+                source.source,
                 subtitleCallback,
                 callback
             )

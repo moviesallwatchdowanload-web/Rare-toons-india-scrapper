@@ -10,9 +10,9 @@ buildscript {
         maven("https://jitpack.io")
     }
     dependencies {
-        classpath("com.android.tools.build:gradle:8.1.4")
+        classpath("com.android.tools.build:gradle:8.5.2")
         classpath("com.github.recloudstream:gradle:81b1d424d2")
-        classpath("org.jetbrains.kotlin:kotlin-gradle-plugin:1.9.22")
+        classpath("org.jetbrains.kotlin:kotlin-gradle-plugin:2.4.0")
     }
 }
 
@@ -32,6 +32,7 @@ fun Project.android(configuration: LibraryExtension.() -> Unit) =
 
 subprojects {
     apply(plugin = "com.android.library")
+    apply(plugin = "org.jetbrains.kotlin.android")
     apply(plugin = "com.lagradost.cloudstream3.gradle")
 
     android {
@@ -41,14 +42,14 @@ subprojects {
             minSdk = 21
         }
         compileOptions {
-            sourceCompatibility = JavaVersion.VERSION_1_8
-            targetCompatibility = JavaVersion.VERSION_1_8
+            sourceCompatibility = JavaVersion.VERSION_11
+            targetCompatibility = JavaVersion.VERSION_11
         }
     }
 
     tasks.withType<KotlinJvmCompile>().configureEach {
         compilerOptions {
-            jvmTarget.set(JvmTarget.JVM_1_8)
+            jvmTarget.set(JvmTarget.JVM_11)
             freeCompilerArgs.addAll(
                 listOf(
                     "-Xno-call-assertions",
