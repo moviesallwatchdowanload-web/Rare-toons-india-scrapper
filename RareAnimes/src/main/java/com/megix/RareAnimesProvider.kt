@@ -2,10 +2,8 @@ package com.megix
 
 import com.lagradost.cloudstream3.*
 import com.lagradost.cloudstream3.utils.*
-import com.lagradost.cloudstream3.plugins.CloudstreamPlugin
 import org.jsoup.nodes.Element
 
-@CloudstreamPlugin
 open class RareAnimesProvider : MainAPI() {
     override var mainUrl = "https://www.rareanimes.mov"
     override var name = "RareAnimes"
