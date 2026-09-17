@@ -1,0 +1,24 @@
+[
+    {
+        "iconUrl": "https://www.rareanimes.mov/favicon.ico",
+        "fileHash": "sha256-44828501be6387969e13d223c378cb0c3311f1aad99fb80457e2c04a5f9a8947",
+        "apiVersion": 1,
+        "fileSize": 13023,
+        "status": 1,
+        "language": "hi",
+        "authors": [
+            "megix"
+        ],
+        "tvTypes": [
+            "Anime",
+            "TvSeries",
+            "Movie",
+            "Cartoon"
+        ],
+        "version": 1,
+        "internalName": "RareAnimes",
+        "description": "RareAnimes \u2014 Hindi Dubbed Anime & Cartoon",
+        "url": "",
+        "name": "RareAnimes"
+    }
+]
