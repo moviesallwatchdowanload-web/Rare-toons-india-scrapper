@@ -50,7 +50,14 @@ open class RareAnimesProvider : MainAPI() {
 
         document.select("h3:contains(Episode), h4:contains(Episode), p:contains(Episode)").forEach { heading ->
             val epTitle = heading.text()
-            val watchLink = heading.nextElementSiblings().select("a:contains(WatchMultQuality)").firstOrNull()
+            val watchLink = heading.nextElementSiblings()
+                .select("a")
+                .firstOrNull {
+                    val text = it.text().lowercase()
+                    text.contains("watchmultquality") ||
+                    text.contains("watchmultiquality") ||
+                    text.contains("streambeta")
+                }
             val epUrl = watchLink?.attr("href")
 
             if (!epUrl.isNullOrBlank()) {
@@ -69,7 +76,12 @@ open class RareAnimesProvider : MainAPI() {
                 this.plot = description
             }
         } else {
-            val watchLink = document.select("a:contains(WatchMultQuality)").firstOrNull()?.attr("href")
+            val watchLink = document.select("a").firstOrNull {
+                val text = it.text().lowercase()
+                text.contains("watchmultquality") ||
+                text.contains("watchmultiquality") ||
+                text.contains("streambeta")
+            }?.attr("href")
             if (watchLink.isNullOrBlank()) return null
             newMovieLoadResponse(title, url, TvType.Movie, EpisodeLink(watchLink)) {
                 this.posterUrl = posterUrl
