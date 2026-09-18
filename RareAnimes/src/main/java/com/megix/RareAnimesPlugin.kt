@@ -8,5 +8,6 @@ import com.lagradost.cloudstream3.plugins.Plugin
 class RareAnimesPlugin : Plugin() {
     override fun load(context: Context) {
         registerMainAPI(RareAnimesProvider())
+        registerExtractorAPI(Codedew())   // ← yeh line add karo
     }
 }
