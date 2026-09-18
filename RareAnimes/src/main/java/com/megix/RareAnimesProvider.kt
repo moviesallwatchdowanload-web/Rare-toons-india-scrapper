@@ -18,76 +18,182 @@ open class RareAnimesProvider : MainAPI() {
         "$mainUrl/cartoon/page/%d/" to "Cartoon"
     )
 
-    override suspend fun getMainPage(page: Int, request: MainPageRequest): HomePageResponse {
+    override suspend fun getMainPage(
+        page: Int,
+        request: MainPageRequest
+    ): HomePageResponse {
         val document = app.get(request.data.format(page)).document
-        val home = document.select("article, div.post").mapNotNull { it.toSearchResult() }
+        val home = document.select("article, div.post")
+            .mapNotNull { it.toSearchResult() }
+
         return newHomePageResponse(request.name, home)
     }
 
     private fun Element.toSearchResult(): SearchResponse? {
-        val title = this.select("h2, h3").first()?.text()?.replace("Download ", "") ?: return null
-        val href = this.select("a").attr("href")
-        val posterUrl = this.select("img").attr("src").ifBlank { this.select("img").attr("data-src") }
+        val title = select("h1.entry-title, h2, h3").first()
+            ?.text()
+            ?.replace("Download ", "")
+            ?.trim()
+            ?: return null
+
+        val href = select("a[href]").firstOrNull()?.attr("href")
+            ?: return null
+
         if (href.isBlank()) return null
+
+        val posterUrl = select("img").firstOrNull()?.let {
+            it.attr("src").ifBlank { it.attr("data-src") }
+        }
+
         return newMovieSearchResponse(title, href, TvType.Movie) {
             this.posterUrl = posterUrl
         }
     }
 
     override suspend fun search(query: String): List<SearchResponse>? {
-        val document = app.get("$mainUrl/?s=$query").document
-        return document.select("article, div.post").mapNotNull { it.toSearchResult() }
+        val document = app.get(
+            "$mainUrl/?s=${query.replace(" ", "+")}"
+        ).document
+
+        return document.select("article, div.post")
+            .mapNotNull { it.toSearchResult() }
     }
 
     override suspend fun load(url: String): LoadResponse? {
         val document = app.get(url).document
-        val title = document.select("h1.entry-title, h1.post-title").text()
-            .replace("Download ", "").substringBefore(" - ")
-        val posterUrl = document.select("div.entry-content img, article img").first()?.attr("src")
-        val description = document.select("div.entry-content p").text().substringBefore("Anime Series Info")
+
+        val title = document
+            .select("h1.entry-title, h1.post-title")
+            .text()
+            .replace("Download ", "")
+            .trim()
+            .substringBefore(" - ")
+
+        val posterUrl = document
+            .select("div.entry-content img, article img")
+            .firstOrNull()
+            ?.attr("src")
+
+        val description = document
+            .select("div.entry-content p")
+            .text()
+            .substringBefore("Anime Series Info")
+            .trim()
 
         val episodes = mutableListOf<Episode>()
 
-        document.select("h3:contains(Episode), h4:contains(Episode), p:contains(Episode)").forEach { heading ->
-            val epTitle = heading.text()
-            val watchLink = heading.nextElementSiblings()
-                .select("a")
-                .firstOrNull {
-                    val text = it.text().lowercase()
-                    text.contains("watchmultquality") ||
-                    text.contains("watchmultiquality") ||
-                    text.contains("streambeta")
-                }
-            val epUrl = watchLink?.attr("href")
+        // Current RareAnimes pages use:
+        // <p>Episode 01 – Title</p>
+        // <p>Hindi – [WatchMultQuality] ...</p>
+        val paragraphs = document.select("div.entry-content p")
 
-            if (!epUrl.isNullOrBlank()) {
+        for (index in paragraphs.indices) {
+            val paragraph = paragraphs[index]
+            val text = paragraph.text().trim()
+
+            val match = Regex(
+                """(?i)^Episode\s+(\d+)\s*[–—-]\s*(.+)$"""
+            ).find(text) ?: continue
+
+            val episodeNumber = match.groupValues[1].toIntOrNull() ?: continue
+            val episodeTitle = match.groupValues[2].trim()
+
+            val sourceParagraph = paragraphs
+                .drop(index + 1)
+                .firstOrNull { next ->
+                    val nextText = next.text().trim()
+                    nextText.contains("WatchMultQuality", ignoreCase = true) ||
+                    nextText.contains("WatchMultiQuality", ignoreCase = true) ||
+                    nextText.contains(".m3u8", ignoreCase = true) ||
+                    nextText.contains(".mp4", ignoreCase = true)
+                }
+
+            val sourceUrl = sourceParagraph
+                ?.select("a[href]")
+                ?.firstOrNull { link ->
+                    val href = link.attr("href")
+                    val textValue = link.text().trim()
+
+                    isUsableSource(href, textValue)
+                }
+                ?.attr("href")
+
+            if (!sourceUrl.isNullOrBlank()) {
                 episodes.add(
-                    newEpisode(EpisodeLink(epUrl)) {
-                        this.name = epTitle
-                        this.episode = Regex("""(\d+)""").find(epTitle)?.groupValues?.get(1)?.toIntOrNull()
+                    newEpisode(EpisodeLink(sourceUrl)) {
+                        this.name = episodeTitle
+                        this.episode = episodeNumber
                     }
                 )
             }
         }
 
-        return if (episodes.isNotEmpty()) {
-            newTvSeriesLoadResponse(title, url, TvType.TvSeries, episodes) {
-                this.posterUrl = posterUrl
-                this.plot = description
-            }
-        } else {
-            val watchLink = document.select("a").firstOrNull {
-                val text = it.text().lowercase()
-                text.contains("watchmultquality") ||
-                text.contains("watchmultiquality") ||
-                text.contains("streambeta")
-            }?.attr("href")
-            if (watchLink.isNullOrBlank()) return null
-            newMovieLoadResponse(title, url, TvType.Movie, EpisodeLink(watchLink)) {
+        if (episodes.isNotEmpty()) {
+            return newTvSeriesLoadResponse(
+                title,
+                url,
+                TvType.TvSeries,
+                episodes
+            ) {
                 this.posterUrl = posterUrl
                 this.plot = description
             }
         }
+
+        // Movie/direct-source fallback
+        val directSource = document
+            .select("a[href]")
+            .firstOrNull { link ->
+                isUsableSource(
+                    link.attr("href"),
+                    link.text()
+                )
+            }
+            ?.attr("href")
+
+        if (directSource.isNullOrBlank()) {
+            return null
+        }
+
+        return newMovieLoadResponse(
+            title,
+            url,
+            TvType.Movie,
+            EpisodeLink(directSource)
+        ) {
+            this.posterUrl = posterUrl
+            this.plot = description
+        }
+    }
+
+    private fun isUsableSource(
+        href: String,
+        linkText: String
+    ): Boolean {
+        if (href.isBlank()) return false
+
+        val lowerHref = href.lowercase()
+        val lowerText = linkText.lowercase()
+
+        // Direct media
+        if (
+            lowerHref.contains(".m3u8") ||
+            lowerHref.contains(".mp4") ||
+            lowerHref.contains(".mkv") ||
+            lowerHref.contains(".webm")
+        ) {
+            return true
+        }
+
+        // Do not send Codedew encrypted links to CloudStream.
+        if (lowerHref.contains("codedew.com")) {
+            return false
+        }
+
+        // Known playback wording; CloudStream can resolve supported hosts.
+        return lowerText.contains("watchmultquality") ||
+            lowerText.contains("watchmultiquality") ||
+            lowerText.contains("streambeta")
     }
 
     override suspend fun loadLinks(
@@ -96,16 +202,31 @@ open class RareAnimesProvider : MainAPI() {
         subtitleCallback: (SubtitleFile) -> Unit,
         callback: (ExtractorLink) -> Unit
     ): Boolean {
-        val sources = AppUtils.tryParseJson<ArrayList<EpisodeLink>>(data) ?: return false
+        val sources =
+            AppUtils.tryParseJson<ArrayList<EpisodeLink>>(data)
+                ?: return false
+
+        var loaded = false
+
         for (source in sources) {
+            val sourceUrl = source.source
+
+            if (sourceUrl.isBlank()) continue
+            if (sourceUrl.lowercase().contains("codedew.com")) continue
+
             loadExtractor(
-                source.source,
+                sourceUrl,
                 subtitleCallback,
                 callback
             )
+
+            loaded = true
         }
-        return true
+
+        return loaded
     }
 
-    data class EpisodeLink(val source: String)
+    data class EpisodeLink(
+        val source: String
+    )
 }
