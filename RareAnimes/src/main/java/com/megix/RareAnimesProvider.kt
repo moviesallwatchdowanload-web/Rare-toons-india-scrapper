@@ -212,15 +212,14 @@ open class RareAnimesProvider : MainAPI() {
             val sourceUrl = source.source
 
             if (sourceUrl.isBlank()) continue
-            if (sourceUrl.lowercase().contains("codedew.com")) continue
 
-            loadExtractor(
+            val result = loadExtractor(
                 sourceUrl,
                 subtitleCallback,
                 callback
             )
+            if (result) loaded = true
 
-            loaded = true
         }
 
         return loaded
