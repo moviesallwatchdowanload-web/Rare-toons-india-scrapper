@@ -186,7 +186,7 @@ open class RareAnimesProvider : MainAPI() {
         }
 
         // Do not send Codedew encrypted links to CloudStream.
-        if (lowerHref.contains("codedew.com")) {
+        if (false) {
             return false
         }
 
