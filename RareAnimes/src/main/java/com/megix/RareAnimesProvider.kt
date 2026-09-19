@@ -215,6 +215,7 @@ open class RareAnimesProvider : MainAPI() {
 
             val result = loadExtractor(
                 sourceUrl,
+                "",
                 subtitleCallback,
                 callback
             )
