@@ -2,8 +2,6 @@ package com.megix
 
 import com.lagradost.cloudstream3.*
 import com.lagradost.cloudstream3.utils.*
-import com.lagradost.cloudstream3.extractors.helper.AesHelper
-import org.jsoup.Jsoup
 
 class Codedew : ExtractorApi() {
     override val name = "Codedew"
@@ -16,51 +14,43 @@ class Codedew : ExtractorApi() {
         subtitleCallback: (SubtitleFile) -> Unit,
         callback: (ExtractorLink) -> Unit
     ) {
-        // Step 1: Get Codedew page → extract Argon embed
         val codedewDoc = app.get(url).document
-        val argonUrl = codedewDoc.select("iframe").attr("src")
+        var argonUrl = codedewDoc.select("iframe").attr("src")
             .ifBlank { codedewDoc.select("iframe").attr("data-src") }
 
-        if (argonUrl.isBlank()) return
+        if (argonUrl.isBlank()) {
+            // sometimes link is direct in page
+            argonUrl = Regex("""https?://argon\.razorshell\.space/embed/[^"'\s]+""").find(codedewDoc.html())?.value ?: return
+        }
+        if (!argonUrl.startsWith("http")) argonUrl = "https:$argonUrl"
 
-        // Step 2: Get Argon page → extract juicyData
         val argonHtml = app.get(argonUrl).text
-        val token = Regex("\"token\"\\s*:\\s*\"([^\"]+)\"").find(argonHtml)?.groupValues?.get(1)
-        val videoId = Regex("\"video\"\\s*:\\s*\"([^\"]+)\"").find(argonHtml)?.groupValues?.get(1)
-        val pingPath = Regex("\"ping\"\\s*:\\s*\"([^\"]+)\"").find(argonHtml)?.groupValues?.get(1)
 
-        if (token.isNullOrBlank() || pingPath.isNullOrBlank()) return
+        // try multiple patterns for stream
+        val patterns = listOf(
+            Regex("""["'](https?://[^"']+\.m3u8[^"']*)["']"""),
+            Regex("""["'](https?://[^"']+\.mp4[^"']*)["']"""),
+            Regex("""file\s*:\s*["']([^"']+)["']"""),
+            Regex("""source\s*:\s*["']([^"']+)["']"""),
+            Regex("""src\s*:\s*["']([^"']+\.m3u8[^"']*)["']""")
+        )
 
-        val pingUrl = if (pingPath.startsWith("http")) pingPath else "https://argon.razorshell.space$pingPath"
-
-        // Step 3: Call the public ping endpoint with token
-        val response = app.post(
-            pingUrl,
-            headers = mapOf(
-                "Referer" to argonUrl,
-                "Origin" to "https://argon.razorshell.space",
-                "Content-Type" to "application/json",
-                "X-Token" to token
-            ),
-            data = mapOf("token" to token)
-        ).text
-
-        // Look for m3u8 / mp4 in response
-        val m3u8 = Regex("(https?://[^\"'\\s]+\\.m3u8[^\"'\\s]*)").find(response)?.value
-            ?: Regex("(https?://[^\"'\\s]+\\.mp4[^\"'\\s]*)").find(response)?.value
-
-        if (!m3u8.isNullOrBlank()) {
-            callback.invoke(
-                newExtractorLink(
-                    name,
-                    name,
-                    m3u8,
-                    type = if (m3u8.contains(".m3u8")) ExtractorLinkType.M3U8 else ExtractorLinkType.VIDEO
-                ) {
-                    this.referer = argonUrl
-                    this.quality = Qualities.Unknown.value
-                }
-            )
+        for (p in patterns) {
+            val match = p.find(argonHtml)?.groupValues?.get(1)
+            if (!match.isNullOrBlank() && (match.contains(".m3u8") || match.contains(".mp4"))) {
+                callback.invoke(
+                    newExtractorLink(
+                        name,
+                        name,
+                        match,
+                        type = if (match.contains(".m3u8")) ExtractorLinkType.M3U8 else ExtractorLinkType.VIDEO
+                    ) {
+                        this.referer = argonUrl
+                        this.quality = Qualities.Unknown.value
+                    }
+                )
+                return
+            }
         }
     }
 }
